@@ -97,7 +97,7 @@ type JWTHeader struct {
 	Alg string `json:"alg"`
 }
 
-func verifyToken(pk PublicKeys, token string) (bool, error) {
+func verifySignature(pk PublicKeys, token string) (bool, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return false, fmt.Errorf("invalid JWT token format: expected 3 parts, got %d", len(parts))
@@ -172,11 +172,11 @@ func main() {
 		fmt.Printf("- Key ID: %s, Modulus size: %d bits\n", kid, pubKey.N.BitLen())
 	}
 
-	isValid, err := verifyToken(publicKeys, token)
+	isValidSignature, err := verifySignature(publicKeys, token)
 	if err != nil {
 		log.Fatalf("Failed to verify token: %v", err)
 	}
 
 	fmt.Println("\nJWT:", token)
-	fmt.Println("\nIs token valid?", isValid)
+	fmt.Println("\nIs token signature valid?", isValidSignature)
 }
