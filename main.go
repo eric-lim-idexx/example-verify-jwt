@@ -11,6 +11,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 	"time"
 )
@@ -197,6 +198,18 @@ func (jwt JWT) validatePayload() (bool, error) {
 	return true, nil
 }
 
+func (jwt JWT) validateScopes(scopes []string) (bool, error) {
+	const delimiter = " "
+	tokenScopes := strings.SplitSeq(jwt.Payload.Scope, delimiter)
+	for tokenScope := range tokenScopes {
+		if !slices.Contains(scopes, tokenScope) {
+			return false, fmt.Errorf("invalid token")
+		}
+	}
+
+	return true, nil
+}
+
 func main() {
 	jwksURL := os.Getenv("COGNITO_JWKS_URL")
 	if jwksURL == "" {
@@ -237,11 +250,23 @@ func main() {
 		log.Fatalf("Failed to validate token: %v", err)
 	}
 
+	isAuthorized, err := jwt.validateScopes(
+		[]string{
+			"http://localhost:7357/v1/test/read",
+			"http://localhost:7357/v1/test/write",
+		},
+	)
+	if err != nil {
+		log.Fatalf("Failed to validate scope: %v", err)
+	}
+
 	fmt.Println("\nJWT:", tokenStr)
 	fmt.Println("Iss:", jwt.Payload.Iss)
 	fmt.Println("Sub:", jwt.Payload.Sub)
 	fmt.Println("Exp:", jwt.Payload.Exp)
+	fmt.Println("Scope:", jwt.Payload.Scope)
 
 	fmt.Println("\nIs token signature valid?", isValidSignature)
 	fmt.Println("\nIs token payload valid?", isValidPayload)
+	fmt.Println("\nIs token authorized?", isAuthorized)
 }
