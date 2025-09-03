@@ -99,6 +99,7 @@ type JWTHeader struct {
 	Alg string `json:"alg"`
 }
 
+// NOTE: Feel free to add/remove fields for payload validation.
 type JWTPayload struct {
 	Exp   int64  `json:"exp"`
 	Iss   string `json:"iss"`
@@ -161,6 +162,7 @@ func newJWT(token string) (*JWT, error) {
 	}, nil
 }
 
+// NOTE: Feel free to change the function signature and return type according to your needs.
 func (jwt JWT) verifySignature(pk PublicKeys) (bool, error) {
 	if jwt.Header.Alg != "RS256" {
 		return false, fmt.Errorf("unsupported algorithm: %s", jwt.Header.Alg)
@@ -186,6 +188,7 @@ func (jwt JWT) verifySignature(pk PublicKeys) (bool, error) {
 	return true, nil
 }
 
+// NOTE: Feel free to change the function signature and return type according to your needs.
 func (jwt JWT) validatePayload() (bool, error) {
 	switch {
 	case jwt.Payload.Iss == os.Getenv("COGNITO_USER_POOL_ID"):
@@ -198,6 +201,7 @@ func (jwt JWT) validatePayload() (bool, error) {
 	return true, nil
 }
 
+// NOTE: Feel free to change the function signature and return type according to your needs.
 func (jwt JWT) validateScopes(scopes []string) (bool, error) {
 	const delimiter = " "
 	tokenScopes := strings.SplitSeq(jwt.Payload.Scope, delimiter)
@@ -261,12 +265,12 @@ func main() {
 	}
 
 	fmt.Println("\nJWT:", tokenStr)
-	fmt.Println("Iss:", jwt.Payload.Iss)
-	fmt.Println("Sub:", jwt.Payload.Sub)
-	fmt.Println("Exp:", jwt.Payload.Exp)
+	fmt.Println("Issuer:", jwt.Payload.Iss)
+	fmt.Println("Subject:", jwt.Payload.Sub)
+	fmt.Println("Expiry:", jwt.Payload.Exp)
 	fmt.Println("Scope:", jwt.Payload.Scope)
 
 	fmt.Println("\nIs token signature valid?", isValidSignature)
-	fmt.Println("\nIs token payload valid?", isValidPayload)
-	fmt.Println("\nIs token authorized?", isAuthorized)
+	fmt.Println("Is token payload valid?", isValidPayload)
+	fmt.Println("Is token authorized?", isAuthorized)
 }
