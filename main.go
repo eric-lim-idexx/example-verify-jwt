@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // NOTE: Full spec: https://datatracker.ietf.org/doc/html/rfc7517#section-4
@@ -184,6 +185,18 @@ func (jwt JWT) verifySignature(pk PublicKeys) (bool, error) {
 	return true, nil
 }
 
+func (jwt JWT) validatePayload() (bool, error) {
+	switch {
+	case jwt.Payload.Iss == os.Getenv("COGNITO_USER_POOL_ID"):
+	case jwt.Payload.Sub == os.Getenv("CLIENT_ID"):
+	case jwt.Payload.Exp > time.Now().Unix():
+	default:
+		return false, fmt.Errorf("invalid token")
+	}
+
+	return true, nil
+}
+
 func main() {
 	jwksURL := os.Getenv("COGNITO_JWKS_URL")
 	if jwksURL == "" {
@@ -219,6 +232,16 @@ func main() {
 		log.Fatalf("Failed to verify token: %v", err)
 	}
 
+	isValidPayload, err := jwt.validatePayload()
+	if err != nil {
+		log.Fatalf("Failed to validate token: %v", err)
+	}
+
 	fmt.Println("\nJWT:", tokenStr)
+	fmt.Println("Iss:", jwt.Payload.Iss)
+	fmt.Println("Sub:", jwt.Payload.Sub)
+	fmt.Println("Exp:", jwt.Payload.Exp)
+
 	fmt.Println("\nIs token signature valid?", isValidSignature)
+	fmt.Println("\nIs token payload valid?", isValidPayload)
 }
